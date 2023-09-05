@@ -52,53 +52,70 @@ const getDiscover = (req, res) => {
     res.json(results);
   }
 };
-const getVideo = (req, res) => {
-  if (req.query.hasOwnProperty("film_id")) {
-    res.status(404).json({ message: "Not found film_id param" });
-  }
-  const idParam = parseInt(req.query.film_id);
-  const dataVideo = movie
-    .getVideoListFromData()
-    .sort((publishedFirst, publishedSecond) => {
-      publishedSecond - publishedFirst;
-    })
-    .filter((video) => video.id === idParam);
-  // console.log(idParam);
-  if (idParam && !isNaN(idParam)) {
-    console.log("Nhảy vào if");
-    // console.log(dataVideo);
-    let videoFindById = dataVideo[0].videos.find(
-      (rule) =>
-        rule.official === true &&
-        rule.site === "YouTube" &&
-        rule.type === "Trailer"
-    );
 
-    if (videoFindById) {
-      console.log(videoFindById);
-      res.json(videoFindById);
-    } else if (!videoFindById) {
-      videoFindById = dataVideo[0].videos.find(
-        (rule) =>
-          rule.official === true &&
-          rule.site === "YouTube" &&
-          rule.type === "Teaser"
-      );
-      res.json(videoFindById);
-    } else {
-      res.status(404).json({ message: "Not found video" });
-    }
-  } else {
-    console.log("Nhay xuống else");
+const getVideo = (req, res) => {
+  if (!req.query.hasOwnProperty("film_id")) {
     // Nếu không có param hoặc param ko phải số
     // -> message : "Not found film_id param"
     res.status(400).json({ message: "Not found film_id param" });
+    return;
+  }
+
+  const idParam = parseInt(req.query.film_id);
+  try {
+    if (idParam && !isNaN(idParam)) {
+      const dataVideo = movie
+        .getVideoListFromData()
+        .sort((publishedFirst, publishedSecond) => {
+          publishedSecond - publishedFirst;
+        })
+        .filter((video) => video.id === idParam);
+
+      let videoFindById = dataVideo[0].videos.find(
+        (rule) =>
+          (rule.official === true &&
+            rule.site === "YouTube" &&
+            rule.type === "Trailer") ||
+          (rule.official === true &&
+            rule.site === "YouTube" &&
+            rule.type === "Teaser")
+      );
+      if (videoFindById) {
+        res.json(videoFindById);
+      } else {
+        res.status(404).json({ message: "Not found video" });
+      }
+    } else {
+      // Nếu không có param hoặc param ko phải số
+      // -> message : "Not found film_id param"
+      res.status(400).json({ message: "Not found film_id param" });
+    }
+  } catch (e) {
+    // Xử lý lỗi nếu param film_id không nằm trong danh sách videoList
+    res.status(400).json({ message: "Not found film_id param" });
   }
 };
-
+const getSearch = (req, res) => {
+  if (!req.query.hasOwnProperty("keyword")) {
+    // Nếu không có param hoặc param ko phải số
+    // -> message : "Not found film_id param"
+    res.status(400).json({ message: "Not found keyword param" });
+    return;
+  } else {
+    const keyword = req.query.keyword.toLowerCase().trim();
+    console.log(keyword);
+    console.log(movie.all()[0].title);
+    const page = parseInt(req.query.page);
+    const data = movie
+      .all()
+      .filter((item) => item.overview.toLowerCase().indexOf(keyword) !== -1);
+    res.json(pagingHelper(page, data));
+  }
+};
 module.exports = {
   getTrending,
   getTopRate,
   getDiscover,
   getVideo,
+  getSearch,
 };

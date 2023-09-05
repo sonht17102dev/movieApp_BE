@@ -6,5 +6,6 @@ router.get("/movies/trending", movie.getTrending);
 router.get("/movies/top-rate", movie.getTopRate);
 router.get("/movies/discover", movie.getDiscover);
 router.get("/movies/video", movie.getVideo);
+router.get("/movies/search", movie.getSearch);
 
 module.exports = router;
